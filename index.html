@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Compras</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .app {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      width: 350px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    input {
+      width: 70%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 8px 12px;
+      margin-left: 5px;
+      border: none;
+      background: #28a745;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 15px;
+    }
+    li {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li.checked span {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .delete {
+      background: #dc3545;
+      margin-left: 10px;
+    }
+    .delete:hover {
+      background: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h2>🛒 Lista de Compras</h2>
+    <input type="text" id="producto" placeholder="Agregar producto...">
+    <button onclick="agregar()">Añadir</button>
+    <ul id="lista"></ul>
+  </div>
+
+  <script>
+    const input = document.getElementById("producto");
+    const lista = document.getElementById("lista");
+
+    // --- Funciones ---
+    function guardarLista() {
+      localStorage.setItem("listaCompras", lista.innerHTML);
+    }
+
+    function reordenarLista() {
+      // Mover los tachados al final
+      const items = Array.from(lista.children);
+      items.forEach(li => {
+        if (li.classList.contains("checked")) {
+          lista.appendChild(li);
+        }
+      });
+    }
+
+    function cargarLista() {
+      lista.innerHTML = localStorage.getItem("listaCompras") || "";
+      // Reasignar eventos a los elementos restaurados
+      lista.querySelectorAll("li").forEach(li => {
+        li.querySelector("span").onclick = () => {
+          li.classList.toggle("checked");
+          reordenarLista();
+          guardarLista();
+        };
+        li.querySelector("button").onclick = () => { li.remove(); guardarLista(); };
+      });
+      reordenarLista();
+    }
+
+    function agregar() {
+      const texto = input.value.trim();
+      if (texto === "") return;
+
+      const li = document.createElement("li");
+
+      const span = document.createElement("span");
+      span.textContent = texto;
+      span.onclick = () => { 
+        li.classList.toggle("checked"); 
+        reordenarLista();
+        guardarLista(); 
+      };
+
+      const btnEliminar = document.createElement("button");
+      btnEliminar.textContent = "X";
+      btnEliminar.className = "delete";
+      btnEliminar.onclick = () => { li.remove(); guardarLista(); };
+
+      li.appendChild(span);
+      li.appendChild(btnEliminar);
+
+      lista.appendChild(li);
+      input.value = "";
+      guardarLista();
+    }
+
+    // --- Eventos ---
+    input.addEventListener("keypress", e => {
+      if (e.key === "Enter") agregar();
+    });
+
+    // --- Inicialización ---
+    window.onload = () => {
+      input.focus();
+      cargarLista();
+    };
+  </script>
+</body>
+</html>
