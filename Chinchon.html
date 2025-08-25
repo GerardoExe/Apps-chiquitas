@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anotador de Chinchón</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .box {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    label {
+      display: inline-block;
+      margin: 5px 0;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 8px 5px 0 0;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .btn-red { background:#dc3545; }
+    .btn-red:hover { background:#a71d2a; }
+    .btn-green { background:#28a745; }
+    .btn-green:hover { background:#1c7c31; }
+    .tabla-container {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      min-width: 300px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    .ganador {
+      font-weight: bold;
+      color: green;
+      font-size: 1.2em;
+      text-align: center;
+      display: block;
+      margin-top: 10px;
+    }
+    .btn-reintegrar {
+      background: #28a745;
+      color: white;
+      padding: 5px 10px;
+      font-size: 0.9em;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-reintegrar:hover {
+      background: #1c7c31;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Anotador de Chinchón</h1>
+
+    <!-- Configuración -->
+    <div class="box">
+      <label>Límite de puntos:</label>
+      <input type="number" id="limite" value="100">
+      <button onclick="setLimite()">Guardar límite</button>
+      <p id="limiteActual">Límite actual: 100</p>
+    </div>
+
+    <!-- Jugadores -->
+    <div class="box">
+      <input type="text" id="nombreJugador" placeholder="Nombre del jugador">
+      <button onclick="agregarJugador()">Agregar jugador</button>
+      <button onclick="reiniciarPartida()" class="btn-red">Reiniciar partida</button>
+      <button onclick="jugarDeNuevo()" class="btn-green">Jugar de nuevo</button>
+    </div>
+
+    <!-- Anotador de ronda -->
+    <div class="box">
+      <h3>Registrar ronda</h3>
+      <div id="inputsRonda"></div>
+      <button onclick="guardarRonda()">Guardar ronda</button>
+    </div>
+
+    <!-- Tabla de puntajes -->
+    <div class="box tabla-container">
+      <h3>Puntajes</h3>
+      <table id="tablaPuntajes">
+        <thead>
+          <tr>
+            <th>Jugador</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p id="ganadorMsg"></p>
+    </div>
+  </div>
+
+  <script>
+    let jugadores = [];
+    let limite = 100;
+
+    // --- Guardar en LocalStorage ---
+    function guardarEstado() {
+      localStorage.setItem("chinchonData", JSON.stringify({ jugadores, limite }));
+    }
+
+    // --- Cargar desde LocalStorage ---
+    function cargarEstado() {
+      const data = localStorage.getItem("chinchonData");
+      if (data) {
+        const obj = JSON.parse(data);
+        jugadores = obj.jugadores || [];
+        limite = obj.limite || 100;
+        document.getElementById("limite").value = limite;
+        document.getElementById("limiteActual").innerText = "Límite actual: " + limite;
+        actualizarTabla();
+        generarInputs();
+        verificarGanador();
+      }
+    }
+
+    function setLimite() {
+      limite = parseInt(document.getElementById("limite").value);
+      document.getElementById("limiteActual").innerText = "Límite actual: " + limite;
+      guardarEstado();
+    }
+
+    function agregarJugador() {
+      const nombre = document.getElementById("nombreJugador").value.trim();
+      if (nombre === "") return;
+      jugadores.push({ nombre: nombre, total: 0 });
+      document.getElementById("nombreJugador").value = "";
+      actualizarTabla();
+      generarInputs();
+      guardarEstado();
+    }
+
+    function generarInputs() {
+      const cont = document.getElementById("inputsRonda");
+      cont.innerHTML = "";
+      jugadores.forEach((j, i) => {
+        cont.innerHTML += `
+          <label>${j.nombre}: </label>
+          <input type="number" id="puntos${i}" value="0"><br>
+        `;
+      });
+    }
+
+    function guardarRonda() {
+      jugadores.forEach((j, i) => {
+        const puntos = parseInt(document.getElementById("puntos" + i).value) || 0;
+        j.total += puntos;
+      });
+      actualizarTabla();
+      generarInputs();
+      verificarGanador();
+      guardarEstado();
+    }
+
+    function actualizarTabla() {
+      const tbody = document.getElementById("tablaPuntajes").querySelector("tbody");
+      tbody.innerHTML = "";
+      jugadores.forEach((j, idx) => {
+        let reintegrarBtn = "";
+        if (j.total >= limite) {
+          reintegrarBtn = `<button class="btn-reintegrar" onclick="reintegrarJugador(${idx})">Reintegrar</button>`;
+        }
+        tbody.innerHTML += `
+          <tr>
+            <td>${j.nombre}</td>
+            <td>${j.total} ${reintegrarBtn}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function reintegrarJugador(index) {
+      // Buscar el puntaje más alto menor al límite
+      let maxValido = 0;
+      jugadores.forEach(j => {
+        if (j.total < limite && j.total > maxValido) {
+          maxValido = j.total;
+        }
+      });
+      jugadores[index].total = maxValido;
+      actualizarTabla();
+      guardarEstado();
+    }
+
+    function verificarGanador() {
+      const perdedores = jugadores.filter(j => j.total >= limite);
+      if (perdedores.length > 0 && jugadores.length > 0) {
+        let min = Math.min(...jugadores.map(j => j.total));
+        let ganadores = jugadores.filter(j => j.total === min).map(j => j.nombre);
+        document.getElementById("ganadorMsg").innerHTML =
+          "🎉 Ganador: <span class='ganador'>" + ganadores.join(", ") + "</span>";
+      } else {
+        document.getElementById("ganadorMsg").innerHTML = "";
+      }
+    }
+
+    function reiniciarPartida() {
+      if (confirm("¿Seguro que querés reiniciar la partida?")) {
+        jugadores = [];
+        limite = 100;
+        document.getElementById("limite").value = 100;
+        document.getElementById("limiteActual").innerText = "Límite actual: 100";
+        actualizarTabla();
+        generarInputs();
+        document.getElementById("ganadorMsg").innerHTML = "";
+        localStorage.removeItem("chinchonData");
+      }
+    }
+
+    function jugarDeNuevo() {
+      if (jugadores.length === 0) {
+        alert("Primero agrega jugadores.");
+        return;
+      }
+      if (confirm("¿Empezar nueva partida con los mismos jugadores?")) {
+        jugadores.forEach(j => j.total = 0);
+        actualizarTabla();
+        generarInputs();
+        document.getElementById("ganadorMsg").innerHTML = "";
+        guardarEstado();
+      }
+    }
+
+    // --- Cargar datos al iniciar ---
+    window.onload = cargarEstado;
+  </script>
+</body>
+</html>
