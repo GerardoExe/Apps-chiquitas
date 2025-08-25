@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversor Bidireccional</title>
+  <style>
+    /* --- Reset básico --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(120deg, #fdfbfb, #ebedee);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .app {
+      background: white;
+      padding: 25px 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .app:hover {
+      transform: translateY(-3px);
+    }
+
+    h2 {
+      font-size: 1.8em;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      margin-top: 15px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: #ff7a00;
+      box-shadow: 0 0 8px rgba(255,122,0,0.3);
+    }
+
+    .resultado {
+      margin-top: 25px;
+      font-size: 1.3em;
+      background: #f7f7f7;
+      padding: 12px;
+      border-radius: 12px;
+      color: #333;
+      font-weight: 500;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 1.5em;
+      }
+      input, select {
+        font-size: 0.95em;
+        padding: 10px;
+      }
+      .resultado {
+        font-size: 1.1em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h2>🔄 Conversor Bidireccional</h2>
+
+    <label for="cantidad">Cantidad:</label>
+    <input type="number" id="cantidad" placeholder="Ingresa un valor">
+
+    <label for="tipo">Tipo de conversión:</label>
+    <select id="tipo">
+      <option value="km-millas">Kilómetros ↔ Millas</option>
+      <option value="c-f">Celsius ↔ Fahrenheit</option>
+      <option value="cm-pulgadas">Centímetros ↔ Pulgadas</option>
+    </select>
+
+    <label for="direccion">Dirección:</label>
+    <select id="direccion">
+      <option value="directo">Unidad A → Unidad B</option>
+      <option value="inverso">Unidad B → Unidad A</option>
+    </select>
+
+    <div class="resultado" id="resultado">Resultado: -</div>
+  </div>
+
+  <script>
+    const cantidadInput = document.getElementById("cantidad");
+    const tipoSelect = document.getElementById("tipo");
+    const direccionSelect = document.getElementById("direccion");
+    const resultadoDiv = document.getElementById("resultado");
+
+    function convertir() {
+      const valor = parseFloat(cantidadInput.value);
+      if (isNaN(valor)) {
+        resultadoDiv.textContent = "Resultado: -";
+        return;
+      }
+
+      let res = "";
+      const direccion = direccionSelect.value;
+
+      switch(tipoSelect.value) {
+        case "km-millas":
+          res = (direccion === "directo") 
+            ? (valor * 0.621371).toFixed(3) + " millas" 
+            : (valor / 0.621371).toFixed(3) + " km";
+          break;
+        case "c-f":
+          res = (direccion === "directo") 
+            ? (valor * 9/5 + 32).toFixed(2) + " °F" 
+            : ((valor - 32) * 5/9).toFixed(2) + " °C";
+          break;
+        case "cm-pulgadas":
+          res = (direccion === "directo") 
+            ? (valor / 2.54).toFixed(2) + " pulgadas" 
+            : (valor * 2.54).toFixed(2) + " cm";
+          break;
+      }
+
+      resultadoDiv.textContent = "Resultado: " + res;
+    }
+
+    cantidadInput.addEventListener("input", convertir);
+    tipoSelect.addEventListener("change", convertir);
+    direccionSelect.addEventListener("change", convertir);
+  </script>
+</body>
+</html>
